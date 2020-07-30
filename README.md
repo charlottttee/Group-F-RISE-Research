@@ -13,6 +13,10 @@ Our goal is to model how age can affect an individual's response to a TBI (traum
 
 
 ### Description of what we would think would work best -Elaine, Chetana
+Summary : Model a healthy net of cells and use function to measure performance.
+          Use another function to give net TBI of certain severity.
+          Use last function to heal the net for certain amount of time.
+          - Chetana
 
 
 ### Questions/Feedback/Concerns -Ashna
