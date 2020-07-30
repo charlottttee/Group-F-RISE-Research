@@ -14,3 +14,6 @@ Our goal is to model how age can affect an individual's response to a TBI (traum
 ### Description of what we would think would work best - Elaine, Chetana
 
 ### Questions/Feedback/Comments - Ashna
+The main issues we're dealing with right now are finding an appropriate model of a healthy net, and deciding how we're going to measure performance. We're planning to measure the level of brain activity for performance, or maybe the cell population or interconnectedness.
+We probably need some help deciding on the model, or just what the requirements should be for the model we decide on.
+We would also appreciate feedback on the feasibility of this, both coding-wise and time-wise in 3 weeks.
