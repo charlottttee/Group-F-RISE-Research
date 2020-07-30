@@ -1,11 +1,11 @@
 # Group-F-RISE-Research
-Initial Group Project Ideas -
+Initial Group Project Ideas 
 
 
-# Refined Research Questions 
+### Refined Research Questions 
 Our goal is to model how age can affect an individual's response to a TBI (traumatic brain injury). -Charlie
 
-# Possible Models of Interest We've Found
+### Links to Possible Models and Articles
 [                ](                )
 
-# Description of what we would think would work best
+### Description of what we would think would work best
