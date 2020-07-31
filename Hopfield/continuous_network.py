@@ -2,6 +2,7 @@ import logging
 from typing import Optional
 import numpy as np
 from hopfield_base import HopfieldNetwork
+import math
 
 __all__ = [
     "ContinuousHopfieldNetwork",
@@ -57,10 +58,10 @@ if __name__ == "__main__":
 
     # Create the network, and specify parameters.
     net = ContinuousHopfieldNetwork(N)
-    n_patterns = 2
-    ind_state_0 = 0
+    n_patterns = 5
+    ind_state_0 = 2
     whiten = True
-    prune = 0.99
+    prune = 0.98
 
     # Load patterns, initialize transform, and train network.
     P = load_patterns(n_patterns)
@@ -119,3 +120,37 @@ if __name__ == "__main__":
     net.update_callback = update_plot
     net.record = ["state", "I_syn"]
     net.run(25)
+    
+
+    
+##============ OUR CODE
+
+    
+def calcPerf():  
+    templateMemory = state_0.reshape(n_rows, n_cols)
+    newTemplateMemory = templateMemory
+    
+    for x in range(n_rows):
+        for y in range(n_cols):
+            newTemplateMemory[x,y] = templateMemory[x,y] - (2/3)
+    
+    networkRecall = cdata[0:28, 0:28, 0]
+    NNR = networkRecall
+    
+    for x in range(28):
+        for y in range(28):
+            a = networkRecall[x,y]
+            NNR[x,y] = a*2 - 1
+    
+    difference = np.zeros((28,28))
+    
+    for x in range(28):
+        for y in range(28):
+            a = NNR[x,y]
+            b = newTemplateMemory[x,y]
+            difference[x,y] = abs(a-b)
+            
+    totalError = np.sum(difference)
+    averageError = totalError/784
+    percentError = 100*averageError/2
+    print("Percent Error = " + str(format(percentError, '0.2f')) + "%")
