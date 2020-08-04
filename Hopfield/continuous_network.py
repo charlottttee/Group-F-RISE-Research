@@ -126,31 +126,34 @@ if __name__ == "__main__":
 ##============ OUR CODE
 
     
-def calcPerf():  
+def calcPerf(): 
     templateMemory = state_0.reshape(n_rows, n_cols)
     newTemplateMemory = templateMemory
-    
+        
     for x in range(n_rows):
         for y in range(n_cols):
             newTemplateMemory[x,y] = templateMemory[x,y] - (2/3)
-    
+        
     networkRecall = cdata[0:28, 0:28, 0]
     NNR = networkRecall
-    
+        
     for x in range(28):
         for y in range(28):
             a = networkRecall[x,y]
             NNR[x,y] = a*2 - 1
-    
+        
     difference = np.zeros((28,28))
-    
+        
     for x in range(28):
         for y in range(28):
             a = NNR[x,y]
             b = newTemplateMemory[x,y]
             difference[x,y] = abs(a-b)
-            
+                
     totalError = np.sum(difference)
     averageError = totalError/784
-
+    
     print("Average Error = " + str(format(averageError, '0.2f')))
+        
+    plt.figure()
+    plt.imshow(difference, cmap = 'gray', vmin = 0, vmax = 2)
