@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # Create the network, and specify parameters.
     net = ContinuousHopfieldNetwork(N)
     n_patterns = 5
-    ind_state_0 = 2
+    ind_state_0 = 0
     whiten = True
     prune = 0.98
 
@@ -149,6 +149,8 @@ def calcPerf():
             a = NNR[x,y]
             b = newTemplateMemory[x,y]
             difference[x,y] = abs(a-b)
+            if difference[x,y] > 0.3:
+                print("(" + str(x) + ", " + str(y) + ")")
                 
     totalError = np.sum(difference)
     averageError = totalError/784
