@@ -152,5 +152,5 @@ def calcPerf():
             
     totalError = np.sum(difference)
     averageError = totalError/784
-    percentError = 100*averageError/2
-    print("Percent Error = " + str(format(percentError, '0.2f')) + "%")
+
+    print("Average Error = " + str(format(averageError, '0.2f')))
