@@ -104,7 +104,9 @@ def calcPerf(templateMemory,
              networkRecall, 
              n_rows, 
              n_cols, 
-             plotVal=False): 
+             plotVal=False, 
+             arrayVal=False, 
+             array=[]): 
     
     newTemplateMemory = templateMemory
     p = np.min(templateMemory) + 1    
@@ -121,6 +123,7 @@ def calcPerf(templateMemory,
             NNR[x,y] = a*2 - 1
         
     difference = np.zeros((n_rows,n_cols))
+    plotDifference = difference
         
     for x in range(n_rows):
         for y in range(n_rows):
@@ -129,15 +132,23 @@ def calcPerf(templateMemory,
             difference[x,y] = abs(a-b)
             if difference[x,y] >= 1:
                 print("(" + str(x) + ", " + str(y) + ")")
+            if arrayVal:
+                if array[x,y] == 1:
+                    difference[x,y] = 0
+                    plotDifference[x,y] = 1
                 
     totalError = np.sum(difference)
-    averageError = totalError/784
+    
+    if not arrayVal:
+        averageError = totalError/784
+    else:
+        averageError = totalError/(784 - np.sum(array))
     
     print("Average Error = " + str(format(averageError, '0.2f')))
     
     if plotVal:    
         plt.figure()
-        plt.imshow(difference, cmap = 'gray', vmin = 0, vmax = 2)
+        plt.imshow(plotDifference, cmap = 'gray', vmin = 0, vmax = 2)
 
 def prune (net, density=0.02, whiten=False):
     weights = net.weights.flatten()
