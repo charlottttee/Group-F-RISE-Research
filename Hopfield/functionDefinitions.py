@@ -17,16 +17,13 @@ from mnistutils import load_mnist
 from utils import *
 from whitening import *
 
-def simulate(pauseVal=0.2, numPatterns=5, patternIndex=0, whitenVal=False, pruneVal=0.98, plotVal=False, tauVal=0.1, itVal=50):
+def simulate(net, pauseVal=0.2, numPatterns=5, patternIndex=0, whitenVal=False, pruneVal=0.98, plotVal=False, tauVal=0.1, itVal=50):
     if __name__ == "__main__":
     
         # Setup logging and some constants.
         logging.basicConfig(level=logging.INFO)
-        n_rows, n_cols = 28, 28
-        N = n_rows * n_cols
     
         # Create the network, and specify parameters.
-        net = ContinuousHopfieldNetwork(N)
         n_patterns = numPatterns
         ind_state_0 = patternIndex
         whiten = whitenVal
@@ -137,6 +134,8 @@ def calcPerf(templateMemory, networkRecall, n_rows, n_cols, plotVal=False):
         plt.figure()
         plt.imshow(difference, cmap = 'gray', vmin = 0, vmax = 2)
     
-
-a, b, c, d = simulate(plotVal=False, patternIndex = 1, pauseVal = 0)
-calcPerf(a, b, c, d, plotVal=False)
+n_rows, n_cols = 28, 28
+N = n_rows * n_cols
+network1 = ContinuousHopfieldNetwork(N)
+a, b, c, d = simulate(net=network1, plotVal=True, patternIndex = 1, pauseVal = 0)
+calcPerf(a, b, c, d, plotVal=True)
