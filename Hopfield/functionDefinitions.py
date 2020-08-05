@@ -3,7 +3,7 @@
 """
 Created on Tue Aug  4 14:08:57 2020
 
-@author: Charlie
+@author: Charlie, Chetana, Jonathan, Ashna, Elaine
 """
 
 
@@ -17,96 +17,101 @@ from mnistutils import load_mnist
 from utils import *
 from whitening import *
 
-def simulate(net, pauseVal=0.2, numPatterns=5, patternIndex=0, whitenVal=False, pruneVal=0.98, plotVal=False, tauVal=0.1, itVal=50):
-    if __name__ == "__main__":
+
+def simulate(net, pattern = "random", 
+             pauseVal=0.2, 
+             numPatterns=5, 
+             patternIndex=0, 
+             whitenVal=False, 
+             plotVal=False, 
+             tauVal=0.1, 
+             itVal=50):
     
-        # Setup logging and some constants.
-        logging.basicConfig(level=logging.INFO)
+    # Setup logging and some constants.
+    logging.basicConfig(level=logging.INFO)
+
+    # Create the network, and specify parameters.
+    n_patterns = numPatterns
+    ind_state_0 = patternIndex
+    whiten = whitenVal
+
+    # Load patterns, initialize transform, and train network.
     
-        # Create the network, and specify parameters.
-        n_patterns = numPatterns
-        ind_state_0 = patternIndex
-        whiten = whitenVal
-        prune = pruneVal
-    
-        # Load patterns, initialize transform, and train network.
+    if pattern == 'written':
         P = load_patterns(n_patterns)
         P = zero_center(P, 1)
-        P0 = P.copy()
-        tform = WhitenTransform("zca") if whiten else IdentityTransform()
-        tform.fit(P)
-        P = tform(P)
-        net.store_patterns(P)
+    else:
+        P = np.random.rand(n_patterns, 28*28) * 2 - 1
+    P0 = P.copy()
+    tform = WhitenTransform("zca") if whiten else IdentityTransform()
+    tform.fit(P)
+    P = tform(P)
+    net.store_patterns(P)
+
+
+    # Initialize state vector.
+    state_0 = P0[ind_state_0]
+    state_0_noisy = shuffle_degrade(state_0, 0.1)
+    state_0_noisy = noise_degrade(state_0_noisy, 0.1)
+    net.state = tform(state_0_noisy)
+
+    # Setup plotting.
+    if plotVal:
+        fig = plt.figure()
+        ax1 = fig.add_subplot(1, 3, 1)
+        ax1.imshow(state_0.reshape(28,28), cmap="gray")
+        ax1.set_title("template")
+
+        ax2 = fig.add_subplot(1, 3, 2)
+        ax2.imshow(state_0_noisy.reshape(28, 28), cmap="gray")
+        ax2.set_title("start")
+
+        ax3 = fig.add_subplot(1, 3, 3)
     
-        weights = net.weights.flatten()
-        K = len(weights)
-        ixs = np.random.choice(K, round(K * prune))
-        weights[ixs] = 0
-        weights = weights.reshape(N, N)
-        if whiten:
-            weights *= N * 2
-        net._weights = weights
+    cdata = np.zeros([28, 28, 4])
+    cdata[:, :, -1] = 1
     
-    
-        # Initialize state vector.
-        state_0 = P0[ind_state_0]
-        state_0_noisy = shuffle_degrade(state_0, 0.1)
-        state_0_noisy = noise_degrade(state_0_noisy, 0.1)
-        net.state = tform(state_0_noisy)
-    
-        # Setup plotting.
+    if plotVal:
+        cimage = ax3.imshow(cdata)
+        ax3.set_xticks([])
+        ax3.set_yticks([])
+
+
+
+    def update_plot(net: HopfieldNetwork) -> None:
+
+        state = tform.inv(net.state)
+        state = (state - state.min()) / (state.max() - state.min())
+        state = state.reshape(28, 28)
+        cdata[:, :, 0:3] = np.expand_dims(state, 2)
+        
         if plotVal:
-            fig = plt.figure()
-            ax1 = fig.add_subplot(1, 3, 1)
-            ax1.imshow(state_0.reshape(n_rows, n_cols), cmap="gray")
-            ax1.set_title("template")
+            cimage.set_data(cdata)
+            ax3.set_title(f"iteration: {net.iteration}")
+            if pauseVal>0:
+                plt.pause(pauseVal)
+
+
+    net.update_callback = update_plot
+    net.record = ["state", "I_syn"]
+    net.tau = tauVal
+    net.run(itVal)
     
-            ax2 = fig.add_subplot(1, 3, 2)
-            ax2.imshow(state_0_noisy.reshape(n_rows, n_cols), cmap="gray")
-            ax2.set_title("start")
-    
-            ax3 = fig.add_subplot(1, 3, 3)
-        
-        cdata = np.zeros([n_rows, n_cols, 4])
-        cdata[:, :, -1] = 1
-        
-        if plotVal:
-            cimage = ax3.imshow(cdata)
-            ax3.set_xticks([])
-            ax3.set_yticks([])
-    
-    
-        def update_plot(net: HopfieldNetwork) -> None:
-    
-            state = tform.inv(net.state)
-            state = (state - state.min()) / (state.max() - state.min())
-            state = state.reshape(n_cols, n_rows)
-            cdata[:, :, 0:3] = np.expand_dims(state, 2)
-            
-            if plotVal:
-                cimage.set_data(cdata)
-                ax3.set_title(f"iteration: {net.iteration}")
-                if pauseVal>0:
-                    plt.pause(pauseVal)
-    
-    
-        net.update_callback = update_plot
-        net.record = ["state", "I_syn"]
-        net.tau = tauVal
-        net.run(itVal)
-        
-        return state_0.reshape(n_rows, n_cols), cdata[0:28, 0:28, 0], n_rows, n_cols
-    
-##============ OUR CODE
+    return state_0.reshape(28, 28), cdata[0:28, 0:28, 0]
 
     
-def calcPerf(templateMemory, networkRecall, n_rows, n_cols, plotVal=False): 
+def calcPerf(templateMemory, 
+             networkRecall, 
+             n_rows, 
+             n_cols, 
+             plotVal=False): 
     
     newTemplateMemory = templateMemory
-        
+    p = np.min(templateMemory) + 1    
+    
     for x in range(n_rows):
         for y in range(n_cols):
-            newTemplateMemory[x,y] = templateMemory[x,y] - (2/3)
+            newTemplateMemory[x,y] = templateMemory[x,y] - p
         
     NNR = networkRecall
         
@@ -122,7 +127,7 @@ def calcPerf(templateMemory, networkRecall, n_rows, n_cols, plotVal=False):
             a = NNR[x,y]
             b = newTemplateMemory[x,y]
             difference[x,y] = abs(a-b)
-            if difference[x,y] > 0.3:
+            if difference[x,y] >= 1:
                 print("(" + str(x) + ", " + str(y) + ")")
                 
     totalError = np.sum(difference)
@@ -133,9 +138,23 @@ def calcPerf(templateMemory, networkRecall, n_rows, n_cols, plotVal=False):
     if plotVal:    
         plt.figure()
         plt.imshow(difference, cmap = 'gray', vmin = 0, vmax = 2)
-    
-n_rows, n_cols = 28, 28
-N = n_rows * n_cols
-network1 = ContinuousHopfieldNetwork(N)
-a, b, c, d = simulate(net=network1, plotVal=True, patternIndex = 1, pauseVal = 0)
-calcPerf(a, b, c, d, plotVal=True)
+
+def prune (net, density=0.02, whiten=False):
+    weights = net.weights.flatten()
+    K = len(weights)
+    ixs = np.random.choice(K, round(K * (1 - density)))
+    weights[ixs] = 0
+    weights = weights.reshape(net._N, net._N)
+    if whiten:
+        weights *= net._N * 2
+    net._weights = weights
+
+def TBI (net, cod):
+    array = np.zeros((1, 784))
+    for i in range(784):
+        chance = np.random.rand()
+        if chance <= cod:
+            array[0, i] = 1
+            net.weights[:, i] = 0
+    array = array.reshape(28, 28)
+    return array
