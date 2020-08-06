@@ -3,7 +3,7 @@
 """
 Created on Wed Aug  5 11:40:27 2020
 
-@author: Charlie
+@author: Charlie, Jonathan, Chetana, Ashna, Elaine
 """
 
 
