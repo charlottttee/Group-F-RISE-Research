@@ -27,24 +27,31 @@ def prune (net, density=0.02, whiten=False):
         weights *= net._N * 2
     net._weights = weights
 
-def loadPatterns (net, numPatterns, patternIndex, whitenVal, pattern='random'):
+def loadAndLearn (net, numPatterns, patternIndex, whitenVal, pattern='random', TBIArray=None):
     # Create the network, and specify parameters.
     n_patterns = numPatterns
     ind_state_0 = patternIndex
     whiten = whitenVal
 
     # Load patterns, initialize transform, and train network.
-    
     if pattern == 'written':
         P = load_patterns(n_patterns)
         P = zero_center(P, 1)
     else:
         P = np.random.rand(n_patterns, 28*28) * 2 - 1
+        P[P<0] = -1
+        P[P>=0] = 1
     P0 = P.copy()
     tform = WhitenTransform("zca") if whiten else IdentityTransform()
     tform.fit(P)
     P = tform(P)
     net.store_patterns(P)
+   
+    if TBIArray is not None:
+        for x in range (784):
+            for y in range (784):
+                if TBIArray[x,y] == 1:
+                    net.weights[x,y] = 0
     
     return P0, ind_state_0, tform
 
@@ -56,7 +63,8 @@ def simulate(net, pattern = "random",
              plotVal=False, 
              tauVal=0.1, 
              itVal=50,
-             density=0.02):
+             density=0.02,
+             deadConnections=None):
     
     # Setup logging and some constants.
     logging.basicConfig(level=logging.INFO)
@@ -64,7 +72,12 @@ def simulate(net, pattern = "random",
     # Create the network, and specify parameters.
     ind_state_0 = patternIndex
     
-    P0, ind_state_0, tform = loadPatterns(net, numPatterns, patternIndex, whitenVal, pattern=pattern)
+    P0, ind_state_0, tform = loadAndLearn(net, 
+                                          numPatterns, 
+                                          patternIndex, 
+                                          whitenVal, 
+                                          pattern=pattern,
+                                          TBIArray=deadConnections)
     prune(net, density=density, whiten=whitenVal)
 
     # Initialize state vector.
@@ -195,11 +208,14 @@ def measureAverageOfExistent(net):
 
 def TBI (net, cod):
     array = np.zeros((1, 784))
+    array2 = np.zeros((784, 784))
     for i in range(784):
         chance = np.random.rand()
         if chance <= cod:
             array[0, i] = 1
             net.weights[:, i] = 0
+            array2[:, i] = 1
             net.weights[i, :] = 0
+            array2[i, :] = 1
     array = array.reshape(28, 28)
-    return array
+    return array, array2
