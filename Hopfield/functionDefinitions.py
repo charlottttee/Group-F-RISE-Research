@@ -67,7 +67,7 @@ def simulate(net, pattern = "random",
              deadConnections=None):
     
     # Setup logging and some constants.
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.WARNING)
 
     # Create the network, and specify parameters.
     ind_state_0 = patternIndex
