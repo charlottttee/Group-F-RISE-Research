@@ -9,7 +9,7 @@ Created on Wed Aug  5 11:40:27 2020
 
 from continuous_network import ContinuousHopfieldNetwork
 import numpy as np
-from functionDefinitions import *
+from functionDefinitions import calcPerf, simulate, TBI, measureWeights
 import matplotlib.pyplot as plt
 ##from functionDefinitions import measureWeights
 
@@ -31,6 +31,13 @@ def cloneAndSimulate (copyNet, den, DC):
              deadConnections=DC)
     error = calcPerf(a, b, 28, 28, False)[0]
     return error"""
+## set up parameters
+
+R = 50
+averageNum = 10
+TBISeverity = 0.1
+startDensity = 0.1
+densityStep = 0.005
 
 n_rows, n_cols = 28, 28
 N = n_rows * n_cols
@@ -38,61 +45,72 @@ N = n_rows * n_cols
 ## Create the control net
 
 baselineNet = ContinuousHopfieldNetwork(N)
+baselineError = np.zeros(averageNum)
+baselineDensity = np.zeros(averageNum)
 
 ## Simulate the control net
 
-a, b = simulate(net=baselineNet, 
-             pauseVal=0, 
-             numPatterns=5, 
-             patternIndex=2, 
-             whitenVal=False, 
-             plotVal=False, 
-             tauVal=0.1, 
-             itVal=50,
-             density=0.1)
+for x in range(averageNum):                  #clone, simulate, and store values
+    clone = baselineNet
+    a, b = simulate(net=baselineNet, 
+                 pauseVal=0, 
+                 numPatterns=5, 
+                 patternIndex=2, 
+                 whitenVal=False, 
+                 plotVal=False, 
+                 tauVal=0.1, 
+                 itVal=50,
+                 density=startDensity)
+    
+    baselineError[x] = calcPerf(a, b, 28, 28, plotVal=False)[0]
+    baselineDensity[x] = measureWeights(clone)/(784**2 - 784)
 
-baselineError = calcPerf(a, b, 28, 28, plotVal=False)[0]
+baselineError = np.sum(baselineError)/averageNum           #average values
+baselineDensity = np.sum(baselineDensity)/averageNum       #average values
 
 print("Baseline Error = " + str(baselineError))
-print("Baseline Density = " + str(measureWeights(baselineNet)/(784**2 - 784)))
+print("Baseline Density = " + str(baselineDensity))
 
 ## Create the TBI Net
 
 TBINet = ContinuousHopfieldNetwork(N)
-deadCells, deadConnections = TBI(TBINet, 0.05)
+deadCells, deadConnections = TBI(TBINet, TBISeverity)
 
-TBITemplate = TBINet
+NDC = np.sum(deadCells)     #number of dead cells
+NAC = 784 - NDC             #number of alive cells
 
-NDC = np.sum(deadCells)
-NAC = 784 - NDC
+TBIError = np.zeros(averageNum)
+TBIDensity = np.zeros(averageNum)
 
 ## Simulate the TBI Net
 
-a, b = simulate(net=TBINet, 
-             pauseVal=0, 
-             numPatterns=5, 
-             patternIndex=2, 
-             whitenVal=False, 
-             plotVal=False, 
-             tauVal=0.1, 
-             itVal=50,
-             density = 0.1,
-             deadConnections=deadConnections)
+for x in range(averageNum):
+    clone = TBINet
+    a, b = simulate(net=clone, 
+                 pauseVal=0, 
+                 numPatterns=5, 
+                 patternIndex=2, 
+                 whitenVal=False, 
+                 plotVal=False, 
+                 tauVal=0.1, 
+                 itVal=50,
+                 density = startDensity,
+                 deadConnections=deadConnections)
+    
+    TBIError[x] = calcPerf(a, b, 28, 28, plotVal=False, arrayVal = True, array = deadCells)[0]
+    TBIDensity[x] = measureWeights(clone)/(NAC**2 - NAC)
 
-TBIError = calcPerf(a, b, 28, 28, plotVal=False, arrayVal = True, array = deadCells)[0]
-TBIDensity = measureWeights(TBINet)/(NAC**2 - NAC)
+TBIError = np.sum(TBIError)/averageNum
+TBIDensity = np.sum(TBIDensity)/averageNum
+
 fTBIDensity = float(format(TBIDensity, '0.5f'))
-
 
 print("TBI Error = " + str(TBIError))
 print("TBI Density = " + str(TBIDensity))
 
 ## Simulate the healed nets
 
-R = 50
-averageNum = 10
-
-densityIncrease = [i * 0.005 for i in range(R)]
+densityIncrease = [i * densityStep for i in range(R)]
 
 errorArray = np.zeros(R)
 
@@ -101,7 +119,7 @@ for i in densityIncrease:
     NEA = np.zeros(averageNum)
     D = i + fTBIDensity
     for x in range(averageNum): 
-        clone = TBITemplate
+        clone = TBINet
         c, t = simulate(net=clone, 
              pauseVal=0, 
              numPatterns=5, 
@@ -122,7 +140,3 @@ plt.figure()
 plt.plot(errorArray)
 plt.plot(np.full(R, TBIError))
 plt.plot(np.full(R, baselineError))
-
-##afterNumber = measureWeights(TBINet)
-##afterDensity = afterNumber/aliveWeights
-##simulatedBeforeNum = aliveWeights * beforeDensity
