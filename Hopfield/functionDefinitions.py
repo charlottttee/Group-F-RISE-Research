@@ -20,7 +20,8 @@ from whitening import *
 def prune (net, density=0.02, whiten=False):
     weights = net.weights.flatten()
     K = len(weights)
-    ixs = np.random.choice(K, round(K * (1 - density)))
+    ixs = np.random.choice(K, round(K * (1 - density)), replace=False)
+    
     weights[ixs] = 0
     weights = weights.reshape(net._N, net._N)
     if whiten:
@@ -137,7 +138,9 @@ def calcPerf(templateMemory,
              n_cols, 
              plotVal=False, 
              arrayVal=False, 
-             array=[]): 
+             array=[], 
+             isoVal=False, 
+             printVal=False): 
     
     newTemplateMemory = templateMemory
     p = np.min(templateMemory) + 1    
@@ -161,7 +164,7 @@ def calcPerf(templateMemory,
             a = NNR[x,y]
             b = newTemplateMemory[x,y]
             difference[x,y] = abs(a-b)
-            if difference[x,y] >= 1:
+            if difference[x,y] >= 1 and isoVal:
                 print("(" + str(x) + ", " + str(y) + ")")
             if arrayVal:
                 if array[x,y] == 1:
@@ -175,11 +178,14 @@ def calcPerf(templateMemory,
     else:
         averageError = totalError/(784 - np.sum(array))
     
-    print("Average Error = " + str(format(averageError, '0.2f')))
+    if printVal:
+        print("Average Error = " + str(format(averageError, '0.2f')))
     
     if plotVal:    
         plt.figure()
         plt.imshow(plotDifference, cmap = 'gray', vmin = 0, vmax = 2)
+    
+    return averageError, newTemplateMemory, NNR
     
 def measureWeights(net):
     numConnections = 0
