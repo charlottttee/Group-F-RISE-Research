@@ -33,11 +33,11 @@ def cloneAndSimulate (copyNet, den, DC):
     return error"""
 ## set up parameters
 
-R = 50
-averageNum = 10
+R = 90
+averageNum = 4
 TBISeverity = 0.1
 startDensity = 0.1
-densityStep = 0.005
+densityStep = 0.01
 
 n_rows, n_cols = 28, 28
 N = n_rows * n_cols
@@ -149,11 +149,11 @@ totalDensity = [(i + TBIDensity) for i in densityIncrease]
 #def plotData():
 plt.figure()
 plt.plot(totalDensity, errorArray, 'r', label = 'After healing')
-plt.plot(totalDensity, np.full(R, TBIError), 'k--', label='After TBI, 10% synaptic density')
-plt.plot(totalDensity, np.full(R, baselineError), 'b--', label='Before TBI, 10% synaptic density')
+##plt.plot(totalDensity, np.full(R, TBIError), 'k--', label='After TBI, 10% synaptic density')
+##plt.plot(totalDensity, np.full(R, baselineError), 'b--', label='Before TBI, 10% synaptic density')
 plt.fill_between(totalDensity, percentileMin, percentileMax)
-plt.ylim([0.16, 0.35])
-plt.xlim([0.35, 0.10])
+plt.ylim([0.0, 0.35])
+plt.xlim([1.0, 0.10])
 plt.xlabel("Synaptic Density (Proxy for Age)")
 plt.ylabel("Error")
 plt.legend()
