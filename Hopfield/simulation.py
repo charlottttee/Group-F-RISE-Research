@@ -113,6 +113,10 @@ print("TBI Density = " + str(TBIDensity))
 densityIncrease = [i * densityStep for i in range(R)]
 
 errorArray = np.zeros(R)
+minError = np.zeros(R)
+maxError = np.zeros(R)
+percentileMin = np.zeros(R)
+percentileMax = np.zeros(R)
 
 iterNum = 0
 for i in densityIncrease:
@@ -133,10 +137,23 @@ for i in densityIncrease:
         cloneError = calcPerf(c, t, 28, 28, plotVal=False, arrayVal = True, array = deadCells)[0]
         NEA[x] = cloneError
     errorArray[iterNum] = np.sum(NEA)/averageNum
+    minError[iterNum] = np.min(NEA)
+    percentileMin[iterNum] = np.percentile(NEA, 2.5)
+    percentileMax[iterNum] = np.percentile(NEA, 97.5)
+    maxError[iterNum] = np.max(NEA)
     print("Iteration: " + str(iterNum))
-    iterNum += 1
+    iterNum += 1 
 
-plt.figure()    
-plt.plot(errorArray)
-plt.plot(np.full(R, TBIError))
-plt.plot(np.full(R, baselineError))
+totalDensity = [(i + TBIDensity) for i in densityIncrease]
+
+#def plotData():
+plt.figure()
+plt.plot(totalDensity, errorArray, 'r', label = 'After healing')
+plt.plot(totalDensity, np.full(R, TBIError), 'k--', label='After TBI, 10% synaptic density')
+plt.plot(totalDensity, np.full(R, baselineError), 'b--', label='Before TBI, 10% synaptic density')
+plt.fill_between(totalDensity, percentileMin, percentileMax)
+plt.ylim([0.16, 0.35])
+plt.xlim([0.35, 0.10])
+plt.xlabel("Synaptic Density (Proxy for Age)")
+plt.ylabel("Error")
+plt.legend()
